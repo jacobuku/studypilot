@@ -254,7 +254,7 @@ export default function CoursesPage() {
                 <input
                   type="text"
                   className="input-field"
-                  placeholder="e.g., Organic Chemistry"
+                  placeholder="e.g., Introduction to Biology"
                   value={newCourse.name}
                   onChange={(e) =>
                     setNewCourse({ ...newCourse, name: e.target.value })
