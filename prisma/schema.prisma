@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  plan         String   @default("free")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  courses      Course[]
+  quizResults  QuizResult[]
+  chatMessages ChatMessage[]
+  studyTasks   StudyTask[]
+}
+
+model Course {
+  id         String   @id @default(cuid())
+  name       String
+  code       String
+  instructor String   @default("")
+  color      String   @default("#3b82f6")
+  progress   Int      @default(0)
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files       CourseFile[]
+  quizResults QuizResult[]
+  studyTasks  StudyTask[]
+
+  @@index([userId])
+}
+
+model CourseFile {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  size      String
+  path      String   @default("")
+  content   String   @default("")
+  courseId   String
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+}
+
+model StudyTask {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  type         String
+  duration     Int
+  completed    Boolean  @default(false)
+  scheduledFor DateTime
+  courseId      String
+  userId        String
+  createdAt    DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+model QuizResult {
+  id         String   @id @default(cuid())
+  title      String
+  type       String
+  score      Int
+  total      Int
+  courseId    String
+  userId     String
+  questions  String
+  createdAt  DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([courseId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  role      String
+  content   String
+  courseId   String?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
