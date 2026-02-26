@@ -8,7 +8,6 @@ import {
   Shield,
   ChevronRight,
   Check,
-  ExternalLink,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -56,32 +55,16 @@ export default function SettingsPage() {
         <button className="btn-primary mt-4 text-sm">Save Changes</button>
       </div>
 
-      {/* Subscription */}
+      {/* Plan */}
       <div className="card">
         <div className="flex items-center gap-2 mb-6">
           <CreditCard size={18} className="text-brand-600" />
-          <h2 className="text-lg font-bold text-gray-900">Subscription</h2>
+          <h2 className="text-lg font-bold text-gray-900">Plan</h2>
         </div>
         <div className="rounded-xl bg-gradient-to-r from-brand-50 to-accent-50 border border-brand-100 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-lg font-bold text-gray-900">Pro Plan</p>
-              <p className="text-sm text-gray-600">$9.99/month &middot; Up to 6 courses</p>
-              <p className="text-xs text-gray-500 mt-1">Next billing date: March 1, 2026</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-700">3 of 6 courses used</p>
-              <div className="mt-1 h-2 w-32 rounded-full bg-white">
-                <div className="h-2 w-1/2 rounded-full bg-brand-500" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 flex gap-3">
-          <button className="btn-primary text-sm gap-2">
-            Upgrade to Max ($20/mo) <ChevronRight size={14} />
-          </button>
-          <button className="btn-secondary text-sm">Manage Billing</button>
+          <p className="text-lg font-bold text-gray-900">Free Beta</p>
+          <p className="text-sm text-gray-600">All features included &middot; Unlimited courses</p>
+          <p className="text-xs text-gray-500 mt-1">You&apos;re one of the first 500 students!</p>
         </div>
       </div>
 
