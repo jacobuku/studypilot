@@ -1,20 +1,39 @@
 // ============================================================
 // StudyPilot API Client
 // ============================================================
-// Simple API layer — swap these fetch calls with your real
-// backend (Express, FastAPI, Supabase, Firebase, etc.)
-// ============================================================
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
+/** Get the stored auth token */
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("studypilot_token");
+}
+
+/** Store the auth token after login/signup */
+export function setToken(token: string) {
+  localStorage.setItem("studypilot_token", token);
+}
+
+/** Clear the auth token on logout */
+export function clearToken() {
+  localStorage.removeItem("studypilot_token");
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    ...options,
-  });
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options?.headers as Record<string, string>),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || "API request failed");
+    throw new Error(err.error || err.message || "API request failed");
   }
   return res.json();
 }
@@ -43,7 +62,10 @@ export const files = {
     const form = new FormData();
     form.append("file", file);
     form.append("courseId", courseId);
-    return fetch(`${API_BASE}/upload`, { method: "POST", body: form }).then((r) => r.json());
+    const token = getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return fetch(`${API_BASE}/upload`, { method: "POST", body: form, headers }).then((r) => r.json());
   },
 };
 

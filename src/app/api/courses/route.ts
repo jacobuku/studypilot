@@ -1,62 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// ============================================================
-// Courses API — Stub endpoints
-// Replace with your real database (Supabase, Prisma, MongoDB, etc.)
-// ============================================================
-
-// In-memory store for demo purposes
-let courses = [
-  {
-    id: "course_1",
-    name: "Organic Chemistry",
-    code: "CHEM 301",
-    instructor: "Dr. Williams",
-    color: "#3b82f6",
-    progress: 72,
-    files: [
-      { id: "f1", name: "Chapter 5 — Alkenes.pdf", type: "pdf", uploadedAt: "2026-02-20", size: "2.4 MB" },
-      { id: "f2", name: "Lecture Notes Week 6.pdf", type: "pdf", uploadedAt: "2026-02-22", size: "1.1 MB" },
-    ],
-  },
-  {
-    id: "course_2",
-    name: "Data Structures",
-    code: "CS 201",
-    instructor: "Prof. Zhang",
-    color: "#22c55e",
-    progress: 58,
-    files: [
-      { id: "f3", name: "Trees & Graphs Slides.pdf", type: "pdf", uploadedAt: "2026-02-18", size: "3.2 MB" },
-    ],
-  },
-  {
-    id: "course_3",
-    name: "Macroeconomics",
-    code: "ECON 101",
-    instructor: "Dr. Patel",
-    color: "#a855f7",
-    progress: 85,
-    files: [
-      { id: "f4", name: "Fiscal Policy Notes.pdf", type: "pdf", uploadedAt: "2026-02-21", size: "1.8 MB" },
-    ],
-  },
-];
+import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
   if (id) {
-    const course = courses.find((c) => c.id === id);
+    const course = await prisma.course.findFirst({
+      where: { id, userId: user.id },
+      include: { files: { orderBy: { createdAt: "desc" } } },
+    });
     if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 });
-    return NextResponse.json(course);
+
+    return NextResponse.json({
+      ...course,
+      files: course.files.map((f) => ({
+        id: f.id,
+        name: f.name,
+        type: f.type,
+        uploadedAt: f.createdAt.toISOString().split("T")[0],
+        size: f.size,
+      })),
+    });
   }
 
-  return NextResponse.json(courses);
+  const courses = await prisma.course.findMany({
+    where: { userId: user.id },
+    include: { files: { orderBy: { createdAt: "desc" } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return NextResponse.json(
+    courses.map((c) => ({
+      id: c.id,
+      name: c.name,
+      code: c.code,
+      instructor: c.instructor,
+      color: c.color,
+      progress: c.progress,
+      files: c.files.map((f) => ({
+        id: f.id,
+        name: f.name,
+        type: f.type,
+        uploadedAt: f.createdAt.toISOString().split("T")[0],
+        size: f.size,
+      })),
+    }))
+  );
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const { name, code, instructor } = body;
 
@@ -64,26 +64,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Name and code are required" }, { status: 400 });
   }
 
-  const newCourse = {
-    id: "course_" + Date.now(),
-    name,
-    code,
-    instructor: instructor || "",
-    color: "#3b82f6",
-    progress: 0,
-    files: [],
-  };
+  const colors = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#ef4444", "#06b6d4"];
+  const count = await prisma.course.count({ where: { userId: user.id } });
 
-  courses.push(newCourse);
-  return NextResponse.json(newCourse, { status: 201 });
+  const course = await prisma.course.create({
+    data: { name, code, instructor: instructor || "", color: colors[count % colors.length], userId: user.id },
+  });
+
+  return NextResponse.json(
+    { id: course.id, name: course.name, code: course.code, instructor: course.instructor, color: course.color, progress: 0, files: [] },
+    { status: 201 }
+  );
 }
 
 export async function DELETE(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
-
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
-  courses = courses.filter((c) => c.id !== id);
+  await prisma.course.deleteMany({ where: { id, userId: user.id } });
   return NextResponse.json({ success: true });
 }

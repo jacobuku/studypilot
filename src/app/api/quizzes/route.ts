@@ -1,52 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+import { prisma } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
-// ============================================================
-// Quizzes API — Stub endpoints
-// Replace with real AI-generated quiz logic.
-//
-// Flow:
-//   1. Receive courseId + quiz type (practice / mock-test / drill)
-//   2. Pull relevant content from course materials
-//   3. Use LLM to generate questions + answers + explanations
-//   4. Return quiz object
-//   5. On submit, grade answers and return score
-// ============================================================
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 
-const stubQuiz = {
-  id: "quiz_1",
-  courseId: "course_1",
-  title: "Organic Chemistry — Alkene Reactions",
-  type: "practice",
-  timeLimit: null,
-  questions: [
-    {
-      id: "q1",
-      text: "Which of the following is the most stable carbocation?",
-      type: "multiple-choice",
-      options: ["Methyl", "Primary", "Secondary", "Tertiary"],
-      correctAnswer: "Tertiary",
-      explanation: "Tertiary carbocations are most stable due to hyperconjugation and the inductive effect of three alkyl groups.",
-    },
-    {
-      id: "q2",
-      text: "In Markovnikov addition of HBr to propene, the bromine attaches to the more substituted carbon.",
-      type: "true-false",
-      options: ["True", "False"],
-      correctAnswer: "True",
-      explanation: "Markovnikov's rule states the nucleophile (Br) adds to the more substituted carbon.",
-    },
-  ],
-};
+interface GeneratedQuestion {
+  id: string;
+  text: string;
+  type: "multiple-choice" | "true-false";
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+}
 
 export async function GET(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const quizId = searchParams.get("id");
 
-  // TODO: Fetch quiz from database
-  return NextResponse.json(stubQuiz);
+  if (quizId) {
+    const result = await prisma.quizResult.findFirst({ where: { id: quizId, userId: user.id } });
+    if (!result) return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    return NextResponse.json({ ...result, questions: JSON.parse(result.questions) });
+  }
+
+  const results = await prisma.quizResult.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  return NextResponse.json(results.map((r) => ({ ...r, questions: JSON.parse(r.questions) })));
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const { courseId, type } = body;
 
@@ -54,41 +46,110 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
   }
 
-  // TODO: Generate quiz questions using AI based on course materials
-  // - type "practice": 5-10 questions, no time limit
-  // - type "mock-test": 30-50 questions, timed
-  // - type "drill": 15-50 rapid-fire questions on weak areas
-
-  return NextResponse.json({
-    ...stubQuiz,
-    id: "quiz_" + Date.now(),
-    type: type || "practice",
+  const course = await prisma.course.findFirst({
+    where: { id: courseId, userId: user.id },
+    include: { files: { where: { content: { not: "" } }, take: 3 } },
   });
+  if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 });
+
+  const materialContext = course.files.length > 0
+    ? course.files.map((f) => `--- ${f.name} ---\n${f.content.slice(0, 2000)}`).join("\n\n")
+    : "";
+
+  const questionCounts: Record<string, number> = { practice: 5, "mock-test": 10, drill: 8 };
+  const numQuestions = questionCounts[type] || 5;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2048,
+      system: "You generate quiz questions for college students. Always respond with valid JSON only, no other text.",
+      messages: [{
+        role: "user",
+        content: `Generate ${numQuestions} quiz questions for the course "${course.name}" (${course.code}).
+Quiz type: ${type || "practice"}
+
+${materialContext ? `Course materials:\n${materialContext}\n\n` : ""}Generate questions appropriate for a college-level course. Mix multiple-choice and true-false questions.
+
+Respond with ONLY a JSON array in this exact format:
+[
+  {
+    "id": "q1",
+    "text": "Question text here?",
+    "type": "multiple-choice",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Option A",
+    "explanation": "Brief explanation of why this is correct."
+  }
+]
+
+For true-false questions, use options: ["True", "False"] and correctAnswer must be "True" or "False".`,
+      }],
+    });
+
+    const text = response.content[0].type === "text" ? response.content[0].text : "[]";
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    const questions: GeneratedQuestion[] = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+
+    const timeLimits: Record<string, number | null> = { practice: null, "mock-test": 30, drill: 15 };
+
+    return NextResponse.json({
+      id: "quiz_" + Date.now(),
+      courseId,
+      title: `${course.name} — ${type || "Practice"}`,
+      type: type || "practice",
+      timeLimit: timeLimits[type] || null,
+      questions,
+    });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "AI service error";
+    console.error("Quiz generation error:", msg);
+    return NextResponse.json({ error: "Failed to generate quiz. Check your ANTHROPIC_API_KEY." }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
-  const body = await req.json();
-  const { quizId, answers } = body;
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!quizId || !answers) {
-    return NextResponse.json({ error: "quizId and answers are required" }, { status: 400 });
+  const body = await req.json();
+  const { quizId, answers, questions, courseId, title, type } = body;
+
+  if (!quizId || !answers || !questions) {
+    return NextResponse.json({ error: "quizId, answers, and questions are required" }, { status: 400 });
   }
 
-  // TODO: Grade answers against correct answers
-  // For stub, return a mock score
-  const totalQuestions = stubQuiz.questions.length;
-  const correctCount = Math.ceil(totalQuestions * 0.7); // Stub: 70% correct
+  let correctCount = 0;
+  const results = questions.map((q: GeneratedQuestion) => {
+    const userAnswer = answers[q.id];
+    const correct = userAnswer === q.correctAnswer;
+    if (correct) correctCount++;
+    return {
+      questionId: q.id,
+      correct,
+      userAnswer,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation,
+    };
+  });
+
+  await prisma.quizResult.create({
+    data: {
+      title: title || "Quiz",
+      type: type || "practice",
+      score: correctCount,
+      total: questions.length,
+      courseId: courseId || "",
+      userId: user.id,
+      questions: JSON.stringify(results),
+    },
+  });
 
   return NextResponse.json({
     quizId,
     score: correctCount,
-    total: totalQuestions,
-    percentage: Math.round((correctCount / totalQuestions) * 100),
-    results: stubQuiz.questions.map((q) => ({
-      questionId: q.id,
-      correct: Math.random() > 0.3,
-      correctAnswer: q.correctAnswer,
-      explanation: q.explanation,
-    })),
+    total: questions.length,
+    percentage: Math.round((correctCount / questions.length) * 100),
+    results,
   });
 }
