@@ -30,8 +30,8 @@ export default function Navbar() {
           <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
             Pricing
           </a>
-          <a href="#testimonials" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-            Students
+          <a href="#story" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+            Our Story
           </a>
         </div>
 
@@ -58,7 +58,7 @@ export default function Navbar() {
             <a href="#features" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Features</a>
             <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">How It Works</a>
             <a href="#pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Pricing</a>
-            <a href="#testimonials" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Students</a>
+            <a href="#story" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Our Story</a>
             <hr className="my-2 border-gray-100" />
             <Link href="/dashboard" className="btn-primary w-full text-center">Get Started Free</Link>
           </div>

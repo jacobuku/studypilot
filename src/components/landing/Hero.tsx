@@ -1,10 +1,9 @@
 "use client";
 import Link from "next/link";
 import {
-  BookOpen,
-  BrainCircuit,
-  Sparkles,
   Upload,
+  BrainCircuit,
+  ClipboardCheck,
   ArrowRight,
 } from "lucide-react";
 
@@ -18,23 +17,21 @@ export default function Hero() {
       <div className="relative mx-auto max-w-7xl px-6 text-center">
         {/* Badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">
-          <Sparkles size={14} />
-          AI-Powered College Tutoring
+          Built by a Real College Tutor
         </div>
 
         {/* Headline */}
         <h1 className="mx-auto max-w-4xl text-5xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-6xl lg:text-7xl animate-slide-up">
-          Your Personal Tutor,{" "}
+          AI Tutoring Without{" "}
           <span className="bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
-            Always On
+            the Learning Curve
           </span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          Upload your class materials, connect Canvas, and let StudyPilot build a
-          personalized study plan with practice questions, mock exams, and
-          step-by-step explanations — so you can learn at your pace, not the
-          class pace.
+          You don&apos;t need to learn how to talk to AI. Tell us what class
+          you&apos;re in and when your exam is. We handle the rest &mdash; study
+          plans, mock tests, and step-by-step explanations, ready to go.
         </p>
 
         {/* CTA buttons */}
@@ -50,9 +47,9 @@ export default function Hero() {
         {/* Quick feature pills */}
         <div className="mt-16 flex flex-wrap items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.3s" }}>
           {[
-            { icon: Upload, label: "Upload PDFs & Notes" },
-            { icon: BrainCircuit, label: "AI Study Plans" },
-            { icon: BookOpen, label: "Mock Tests & Drills" },
+            { icon: Upload, label: "Upload & Go" },
+            { icon: BrainCircuit, label: "Auto Study Plans" },
+            { icon: ClipboardCheck, label: "One-Click Mock Tests" },
           ].map(({ icon: Icon, label }) => (
             <div
               key={label}

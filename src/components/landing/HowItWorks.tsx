@@ -1,34 +1,27 @@
 "use client";
-import { Upload, Cpu, BookOpen, Trophy } from "lucide-react";
+import { Upload, Zap, Trophy } from "lucide-react";
 
 const steps = [
   {
     icon: Upload,
     step: "01",
-    title: "Upload Your Materials",
+    title: "Tell Us Your Class",
     description:
-      "Drop your syllabus, lecture PDFs, notes, or textbook chapters. Or connect Canvas to auto-import everything.",
+      "Upload your syllabus, lecture slides, or just type your course name and exam date. That's all we need.",
   },
   {
-    icon: Cpu,
+    icon: Zap,
     step: "02",
-    title: "AI Builds Your Plan",
+    title: "Get Your Plan in 60 Seconds",
     description:
-      "Our agents analyze your content, identify key topics, and create a personalized study schedule with milestones.",
-  },
-  {
-    icon: BookOpen,
-    step: "03",
-    title: "Practice & Learn",
-    description:
-      "Take auto-generated quizzes, run mock exams, or ask questions. Get detailed explanations for every concept.",
+      "StudyPilot instantly builds a study plan, generates practice questions, and prepares mock exams — all tailored to your materials.",
   },
   {
     icon: Trophy,
-    step: "04",
-    title: "Ace Your Exams",
+    step: "03",
+    title: "Study & Ace Your Exams",
     description:
-      "Enter drill mode before midterms and finals. Track your progress and walk into every exam with confidence.",
+      "Follow your daily plan, take mock tests, ask questions when stuck. Walk into every exam knowing you're prepared.",
   },
 ];
 
@@ -38,17 +31,18 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">
-            Simple Process
+            Dead Simple
           </p>
           <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-            How StudyPilot Works
+            Value in Under 60 Seconds
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-gray-600">
-            From upload to exam day — four simple steps to better grades.
+            No setup wizards. No prompt engineering. Upload one PDF and
+            immediately start learning.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-10 sm:grid-cols-3">
           {steps.map(({ icon: Icon, step, title, description }, idx) => (
             <div key={step} className="relative text-center">
               {/* Connector line */}
