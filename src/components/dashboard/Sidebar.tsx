@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
+import { auth } from "@/lib/api";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -28,7 +29,13 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <aside
@@ -75,15 +82,15 @@ export default function Sidebar() {
         {/* Subscription badge */}
         {!collapsed && (
           <div className="mb-2 rounded-xl bg-gradient-to-r from-brand-50 to-accent-50 p-3">
-            <p className="text-xs font-semibold text-gray-900">Pro Plan</p>
-            <p className="text-xs text-gray-500">3 of 6 courses used</p>
-            <div className="mt-2 h-1.5 rounded-full bg-white">
-              <div className="h-1.5 w-1/2 rounded-full bg-brand-500" />
-            </div>
+            <p className="text-xs font-semibold text-gray-900">Free Beta</p>
+            <p className="text-xs text-gray-500">All features included</p>
           </div>
         )}
 
-        <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+        >
           <LogOut size={20} className="shrink-0" />
           {!collapsed && "Log Out"}
         </button>

@@ -1,90 +1,80 @@
 export interface Course {
   id: string;
+  user_id: string;
   name: string;
-  code: string;
-  instructor: string;
-  color: string;
-  progress: number;
-  nextExam?: string;
-  files: CourseFile[];
+  exam_date: string | null;
+  created_at: string;
+  materials?: Material[];
 }
 
-export interface CourseFile {
+export interface Material {
   id: string;
-  name: string;
-  type: "pdf" | "notes" | "textbook" | "lecture";
-  uploadedAt: string;
-  size: string;
+  course_id: string;
+  user_id: string;
+  file_name: string;
+  file_path: string;
+  extracted_text: string | null;
+  created_at: string;
 }
 
 export interface StudyPlan {
   id: string;
-  courseId: string;
-  courseName: string;
-  tasks: StudyTask[];
-  createdAt: string;
+  course_id: string;
+  user_id: string;
+  exam_date: string;
+  plan_json: {
+    courseSummary: string;
+    totalDays: number;
+    dailyPlan: DayPlan[];
+  };
+  created_at: string;
 }
 
-export interface StudyTask {
-  id: string;
-  title: string;
-  description: string;
-  type: "read" | "practice" | "review" | "quiz" | "drill";
-  duration: number; // minutes
-  completed: boolean;
-  scheduledFor: string;
+export interface DayPlan {
+  day: number;
+  date: string;
+  theme: string;
+  tasks: { task: string; duration: string; type: string }[];
+  totalTime: string;
 }
 
 export interface Quiz {
   id: string;
-  courseId: string;
+  course_id: string;
+  user_id: string;
   title: string;
-  type: "practice" | "mock-test" | "drill";
-  questions: Question[];
-  timeLimit?: number; // minutes
-  score?: number;
-  completedAt?: string;
+  questions_json: QuizQuestion[];
+  created_at: string;
 }
 
-export interface Question {
-  id: string;
-  text: string;
-  options?: string[];
-  type: "multiple-choice" | "short-answer" | "true-false";
+export interface QuizQuestion {
+  id: number;
+  question: string;
+  options: string[];
   correctAnswer: string;
   explanation: string;
-  userAnswer?: string;
+  difficulty: "easy" | "medium" | "hard";
 }
 
-export interface ChatMessage {
+export interface QuizResult {
   id: string;
-  role: "user" | "assistant" | "agent";
-  content: string;
-  timestamp: string;
-  courseContext?: string;
-  agentAction?: string;
+  quiz_id: string;
+  user_id: string;
+  answers_json: Record<string, string>;
+  score: number;
+  total: number;
+  feedback_json: {
+    feedback: QuizFeedback[];
+    weaknessAnalysis: { weakAreas: string[]; suggestions: string[] } | null;
+  };
+  created_at: string;
 }
 
-export interface ExamReminder {
-  id: string;
-  courseId: string;
-  courseName: string;
-  examType: "midterm" | "final" | "quiz" | "test";
-  date: string;
-  drillMode: boolean;
-}
-
-export interface Subscription {
-  plan: "free" | "pro" | "max";
-  coursesUsed: number;
-  coursesLimit: number;
-  price: number;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  subscription: Subscription;
-  courses: Course[];
+export interface QuizFeedback {
+  questionId: number;
+  question: string;
+  studentAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  explanation: string;
 }

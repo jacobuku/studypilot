@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -14,21 +14,20 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
-    "@prisma/client": "^5.22.0",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.10",
+    "@supabase/supabase-js": "^2.97.0",
     "@types/node": "^25.3.0",
     "@types/react": "^18.3.28",
     "autoprefixer": "^10.4.27",
-    "bcryptjs": "^3.0.3",
-    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.575.0",
     "next": "^14.2.35",
+    "pdf-parse": "^2.4.5",
     "postcss": "^8.5.6",
-    "prisma": "^5.22.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/pdf-parse": "^1.1.5"
   }
 }

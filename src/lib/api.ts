@@ -1,100 +1,106 @@
 // ============================================================
-// StudyPilot API Client
+// StudyPilot API Client — Supabase Auth Edition
 // ============================================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
+import { supabase } from './supabase';
 
-/** Get the stored auth token */
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("studypilot_token");
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-/** Store the auth token after login/signup */
-export function setToken(token: string) {
-  localStorage.setItem("studypilot_token", token);
-}
-
-/** Clear the auth token on logout */
-export function clearToken() {
-  localStorage.removeItem("studypilot_token");
+/** Get the current Supabase session token */
+async function getToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = getToken();
+  const token = await getToken();
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options?.headers as Record<string, string>),
   };
+
+  // Only set Content-Type for non-FormData requests
+  if (!(options?.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error || err.message || "API request failed");
+    throw new Error(err.error || err.message || 'API request failed');
   }
   return res.json();
 }
 
-// --- Auth ---
+// --- Auth (handled by Supabase client directly) ---
 export const auth = {
-  login: (email: string, password: string) =>
-    request("/auth", { method: "POST", body: JSON.stringify({ email, password, action: "login" }) }),
-  signup: (email: string, password: string, name: string) =>
-    request("/auth", { method: "POST", body: JSON.stringify({ email, password, name, action: "signup" }) }),
-  logout: () => request("/auth", { method: "DELETE" }),
+  signUp: (email: string, password: string, name: string) =>
+    supabase.auth.signUp({ email, password, options: { data: { full_name: name } } }),
+  signIn: (email: string, password: string) =>
+    supabase.auth.signInWithPassword({ email, password }),
+  signOut: () => supabase.auth.signOut(),
+  getSession: () => supabase.auth.getSession(),
+  onAuthStateChange: (callback: Parameters<typeof supabase.auth.onAuthStateChange>[0]) =>
+    supabase.auth.onAuthStateChange(callback),
 };
 
 // --- Courses ---
 export const courses = {
-  list: () => request("/courses"),
-  get: (id: string) => request(`/courses?id=${id}`),
-  create: (data: { name: string; code: string; instructor: string }) =>
-    request("/courses", { method: "POST", body: JSON.stringify(data) }),
-  delete: (id: string) => request(`/courses?id=${id}`, { method: "DELETE" }),
+  list: () => request<{ courses: any[] }>('/courses'),
+  create: (data: { name: string; examDate?: string }) =>
+    request('/courses', { method: 'POST', body: JSON.stringify(data) }),
+  delete: (id: string) => request(`/courses?id=${id}`, { method: 'DELETE' }),
 };
 
 // --- File Upload ---
 export const files = {
-  upload: (courseId: string, file: File) => {
+  upload: async (courseId: string, file: File) => {
+    const token = await getToken();
     const form = new FormData();
-    form.append("file", file);
-    form.append("courseId", courseId);
-    const token = getToken();
+    form.append('file', file);
+    form.append('courseId', courseId);
     const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    return fetch(`${API_BASE}/upload`, { method: "POST", body: form, headers }).then((r) => r.json());
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: form, headers });
+    return res.json();
   },
 };
 
 // --- Study Plans ---
 export const studyPlans = {
-  generate: (courseId: string) =>
-    request("/study-plan", { method: "POST", body: JSON.stringify({ courseId }) }),
-  get: (courseId: string) => request(`/study-plan?courseId=${courseId}`),
-  toggleTask: (taskId: string, completed: boolean) =>
-    request("/study-plan", { method: "PATCH", body: JSON.stringify({ taskId, completed }) }),
+  generate: (courseId: string, examDate: string) =>
+    request('/plan', { method: 'POST', body: JSON.stringify({ courseId, examDate }) }),
 };
 
-// --- Chat / Q&A ---
-export const chat = {
-  send: (message: string, courseId?: string) =>
-    request("/chat", { method: "POST", body: JSON.stringify({ message, courseId }) }),
-};
-
-// --- Quizzes ---
+// --- Quiz ---
 export const quizzes = {
-  generate: (courseId: string, type: "practice" | "mock-test" | "drill") =>
-    request("/quizzes", { method: "POST", body: JSON.stringify({ courseId, type }) }),
-  submit: (quizId: string, answers: Record<string, string>) =>
-    request("/quizzes", { method: "PATCH", body: JSON.stringify({ quizId, answers }) }),
+  generate: (courseId: string, topic?: string, questionCount?: number) =>
+    request('/quiz', { method: 'POST', body: JSON.stringify({ courseId, topic, questionCount }) }),
+  grade: (quizId: string, answers: Record<string, string>) =>
+    request('/grade', { method: 'POST', body: JSON.stringify({ quizId, answers }) }),
+};
+
+// --- Ask (streaming) ---
+export const chat = {
+  ask: async (courseId: string, question: string): Promise<Response> => {
+    const token = await getToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(`${API_BASE}/ask`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ courseId, question }),
+    });
+  },
 };
 
 // --- Canvas LMS ---
 export const canvas = {
   connect: (apiToken: string, domain: string) =>
-    request("/canvas", { method: "POST", body: JSON.stringify({ apiToken, domain }) }),
-  sync: () => request("/canvas", { method: "PATCH" }),
+    request('/canvas', { method: 'POST', body: JSON.stringify({ apiToken, domain }) }),
+  sync: () => request('/canvas', { method: 'PATCH' }),
 };

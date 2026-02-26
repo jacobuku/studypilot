@@ -1,92 +1,64 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/auth";
+import { NextRequest, NextResponse } from 'next/server';
+import { getUser } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/supabase';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
+// GET all courses for current user
 export async function GET(req: NextRequest) {
-  const user = await getUserFromRequest(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
+  const { data, error } = await supabaseAdmin
+    .from('courses')
+    .select('*, materials(id, file_name, created_at)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
 
-  if (id) {
-    const course = await prisma.course.findFirst({
-      where: { id, userId: user.id },
-      include: { files: { orderBy: { createdAt: "desc" } } },
-    });
-    if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 });
-
-    return NextResponse.json({
-      ...course,
-      files: course.files.map((f) => ({
-        id: f.id,
-        name: f.name,
-        type: f.type,
-        uploadedAt: f.createdAt.toISOString().split("T")[0],
-        size: f.size,
-      })),
-    });
-  }
-
-  const courses = await prisma.course.findMany({
-    where: { userId: user.id },
-    include: { files: { orderBy: { createdAt: "desc" } } },
-    orderBy: { createdAt: "asc" },
-  });
-
-  return NextResponse.json(
-    courses.map((c) => ({
-      id: c.id,
-      name: c.name,
-      code: c.code,
-      instructor: c.instructor,
-      color: c.color,
-      progress: c.progress,
-      files: c.files.map((f) => ({
-        id: f.id,
-        name: f.name,
-        type: f.type,
-        uploadedAt: f.createdAt.toISOString().split("T")[0],
-        size: f.size,
-      })),
-    }))
-  );
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ courses: data });
 }
 
+// POST create new course
 export async function POST(req: NextRequest) {
-  const user = await getUserFromRequest(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json();
-  const { name, code, instructor } = body;
+  const { name, examDate } = await req.json();
 
-  if (!name || !code) {
-    return NextResponse.json({ error: "Name and code are required" }, { status: 400 });
+  if (!name) {
+    return NextResponse.json({ error: 'Course name is required' }, { status: 400 });
   }
 
-  const colors = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#ef4444", "#06b6d4"];
-  const count = await prisma.course.count({ where: { userId: user.id } });
+  const { data, error } = await supabaseAdmin
+    .from('courses')
+    .insert({
+      user_id: user.id,
+      name,
+      exam_date: examDate || null,
+    })
+    .select()
+    .single();
 
-  const course = await prisma.course.create({
-    data: { name, code, instructor: instructor || "", color: colors[count % colors.length], userId: user.id },
-  });
-
-  return NextResponse.json(
-    { id: course.id, name: course.name, code: course.code, instructor: course.instructor, color: course.color, progress: 0, files: [] },
-    { status: 201 }
-  );
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ course: data }, { status: 201 });
 }
 
+// DELETE a course
 export async function DELETE(req: NextRequest) {
-  const user = await getUserFromRequest(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+  const id = searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-  await prisma.course.deleteMany({ where: { id, userId: user.id } });
+  const { error } = await supabaseAdmin
+    .from('courses')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

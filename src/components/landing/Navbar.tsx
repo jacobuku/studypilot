@@ -37,10 +37,10 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="hidden items-center gap-3 md:flex">
-          <Link href="/dashboard" className="btn-secondary text-sm">
+          <Link href="/login" className="btn-secondary text-sm">
             Log In
           </Link>
-          <Link href="/dashboard" className="btn-primary text-sm">
+          <Link href="/login" className="btn-primary text-sm">
             Get Started Free
           </Link>
         </div>
@@ -60,7 +60,7 @@ export default function Navbar() {
             <a href="#pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Pricing</a>
             <a href="#story" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Our Story</a>
             <hr className="my-2 border-gray-100" />
-            <Link href="/dashboard" className="btn-primary w-full text-center">Get Started Free</Link>
+            <Link href="/login" className="btn-primary w-full text-center">Get Started Free</Link>
           </div>
         </div>
       )}
