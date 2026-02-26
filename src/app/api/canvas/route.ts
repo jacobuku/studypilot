@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // ============================================================
 // Canvas LMS Integration API — Stub endpoints
 // Replace with real Canvas API calls.

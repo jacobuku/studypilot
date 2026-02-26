@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 
 export async function POST(req: NextRequest) {

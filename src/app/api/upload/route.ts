@@ -4,6 +4,8 @@ import path from "path";
 import { prisma } from "@/lib/db";
 import { getUserFromRequest } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
