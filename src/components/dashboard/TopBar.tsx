@@ -37,7 +37,7 @@ export default function TopBar() {
           </div>
           <div className="hidden sm:block">
             <p className="text-sm font-semibold text-gray-900">Student</p>
-            <p className="text-xs text-gray-500">Pro Plan</p>
+            <p className="text-xs text-gray-500">Free Beta</p>
           </div>
         </div>
       </div>

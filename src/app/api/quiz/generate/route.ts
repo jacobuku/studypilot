@@ -22,15 +22,6 @@ export async function POST(req: NextRequest) {
     const { courseId } = await req.json();
     if (!courseId) return NextResponse.json({ error: "courseId required" }, { status: 400 });
 
-    const { data: course } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("id", courseId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 });
-
     const { data: materials } = await supabase
       .from("materials")
       .select("extracted_text, file_name")
@@ -39,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     if (!materials || materials.length === 0) {
       return NextResponse.json(
-        { error: "No materials with extracted text. Upload a PDF first." },
+        { error: "No materials found. Upload a PDF first." },
         { status: 400 }
       );
     }
@@ -49,80 +40,66 @@ export async function POST(req: NextRequest) {
       .join("\n\n")
       .slice(0, 80000);
 
-    const today = new Date().toISOString().split("T")[0];
-    const examDate = course.exam_date || "unknown";
-
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4000,
       messages: [
         {
           role: "user",
-          content: `You are a study plan generator. Create a day-by-day study plan.
+          content: `Generate a 10-question multiple choice quiz from these course materials.
 
-COURSE: ${course.name}
-TODAY: ${today}
-EXAM DATE: ${examDate}
 MATERIALS:
 ${combinedText}
 
-Return ONLY valid JSON (no markdown, no backticks) in this format:
+Return ONLY valid JSON (no markdown, no backticks):
 {
-  "title": "Study Plan for [Course Name]",
-  "totalDays": <number>,
-  "days": [
+  "questions": [
     {
-      "day": 1,
-      "date": "YYYY-MM-DD",
-      "topic": "Topic name",
-      "tasks": ["Task 1", "Task 2", "Task 3"],
-      "estimatedHours": 2
+      "id": 1,
+      "question": "Question text?",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correctIndex": 0,
+      "explanation": "Brief explanation of why this is correct"
     }
   ]
 }
 
 Rules:
-- Spread topics evenly across available days
-- Include review days before the exam
-- Last day should be light review only
-- Each day 2-4 tasks, 1-3 hours
-- If exam date is unknown, plan for 14 days`,
+- Exactly 10 questions
+- 4 options each (A/B/C/D)
+- correctIndex is 0-based (0=A, 1=B, 2=C, 3=D)
+- Mix difficulty: 3 easy, 4 medium, 3 hard
+- Test understanding, not memorization`,
         },
       ],
     });
 
-    const text =
-      message.content[0].type === "text" ? message.content[0].text : "";
+    const text = message.content[0].type === "text" ? message.content[0].text : "";
 
-    let plan;
+    let quiz;
     try {
-      plan = JSON.parse(text);
+      quiz = JSON.parse(text);
     } catch {
       const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        plan = JSON.parse(match[0]);
-      } else {
-        return NextResponse.json({ error: "Failed to parse study plan" }, { status: 500 });
-      }
+      if (match) quiz = JSON.parse(match[0]);
+      else return NextResponse.json({ error: "Failed to parse quiz" }, { status: 500 });
     }
 
     const { data: saved, error: saveErr } = await supabase
-      .from("study_plans")
+      .from("quizzes")
       .insert({
         user_id: user.id,
         course_id: courseId,
-        plan_data: plan,
+        questions: quiz.questions,
       })
       .select()
       .single();
 
-    if (saveErr) {
-      return NextResponse.json({ error: saveErr.message }, { status: 500 });
-    }
+    if (saveErr) return NextResponse.json({ error: saveErr.message }, { status: 500 });
 
-    return NextResponse.json({ plan: saved }, { status: 201 });
+    return NextResponse.json({ quiz: saved }, { status: 201 });
   } catch (err: any) {
-    console.error("Study plan error:", err);
+    console.error("Quiz generate error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

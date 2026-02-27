@@ -1,220 +1,213 @@
 "use client";
-import {
-  BookOpen,
-  CalendarDays,
-  ClipboardCheck,
-  MessageCircle,
-  TrendingUp,
-  Clock,
-  Zap,
-  ChevronRight,
-  Bot,
-} from "lucide-react";
-import Link from "next/link";
 
-const courses = [
-  { name: "Organic Chemistry", code: "CHEM 301", progress: 72, color: "bg-brand-500", bgColor: "bg-brand-50" },
-  { name: "Data Structures", code: "CS 201", progress: 58, color: "bg-accent-500", bgColor: "bg-accent-50" },
-  { name: "Macroeconomics", code: "ECON 101", progress: 85, color: "bg-purple-500", bgColor: "bg-purple-50" },
-];
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
-const todayTasks = [
-  { title: "Review Ch. 5 — Alkene Reactions", course: "CHEM 301", type: "read", done: true },
-  { title: "Practice: Binary Trees (10 Qs)", course: "CS 201", type: "practice", done: false },
-  { title: "Read: Fiscal Policy Notes", course: "ECON 101", type: "read", done: false },
-  { title: "Mock Quiz: Organic Mechanisms", course: "CHEM 301", type: "quiz", done: false },
-];
+interface DayPlan {
+  day: number;
+  date: string;
+  topic: string;
+  tasks: string[];
+  estimatedHours: number;
+}
 
-const upcomingExams = [
-  { name: "CHEM 301 Midterm", date: "Mar 15", daysLeft: 17, urgent: true },
-  { name: "CS 201 Quiz 3", date: "Mar 8", daysLeft: 10, urgent: false },
-  { name: "ECON 101 Final", date: "May 2", daysLeft: 65, urgent: false },
-];
+interface StudyPlan {
+  id: string;
+  course_id: string;
+  plan_data: {
+    title: string;
+    totalDays: number;
+    days: DayPlan[];
+  };
+  created_at: string;
+}
 
-const agentActivity = [
-  { action: "Generated 15 practice questions for Alkene Reactions", time: "2 min ago", icon: ClipboardCheck },
-  { action: "Updated your study plan based on CHEM midterm date", time: "1 hour ago", icon: CalendarDays },
-  { action: "Analyzed uploaded lecture slides for CS 201", time: "3 hours ago", icon: BookOpen },
-];
+interface Course {
+  id: string;
+  name: string;
+  exam_date: string | null;
+}
 
-export default function DashboardPage() {
+export default function StudyPlanPage() {
+  const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+  const router = useRouter();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [plans, setPlans] = useState<StudyPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<StudyPlan | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function fetchData() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push("/login"); return; }
+
+    const [coursesRes, plansRes] = await Promise.all([
+      supabase.from("courses").select("*").eq("user_id", session.user.id),
+      supabase.from("study_plans").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
+    ]);
+
+    setCourses(coursesRes.data || []);
+    setPlans(plansRes.data || []);
+    setLoading(false);
+  }
+
+  async function generatePlan(courseId: string) {
+    setGenerating(courseId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/study-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ courseId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to generate plan");
+        return;
+      }
+
+      setPlans((prev) => [data.plan, ...prev]);
+      setSelectedPlan(data.plan);
+    } catch (err) {
+      alert("Error generating plan");
+    } finally {
+      setGenerating(null);
+    }
+  }
+
+  function toggleTask(dayIndex: number, taskIndex: number) {
+    const key = `${dayIndex}-${taskIndex}`;
+    setCompletedTasks((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Welcome header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome back! 👋</h1>
-        <p className="mt-1 text-gray-500">Here&apos;s your study overview for today.</p>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Study Plans</h1>
+
+      <div className="mb-8 space-y-3">
+        <h2 className="text-lg font-semibold text-gray-700">Generate a New Plan</h2>
+        {courses.length === 0 ? (
+          <p className="text-gray-500">No courses yet. Add a course first.</p>
+        ) : (
+          courses.map((c) => (
+            <div key={c.id} className="flex items-center justify-between bg-white border rounded-lg p-4">
+              <div>
+                <p className="font-medium">{c.name}</p>
+                {c.exam_date && (
+                  <p className="text-sm text-gray-500">Exam: {c.exam_date}</p>
+                )}
+              </div>
+              <button
+                onClick={() => generatePlan(c.id)}
+                disabled={generating === c.id}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generating === c.id ? "Generating..." : "Generate Study Plan"}
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Stats row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Active Courses", value: "3", icon: BookOpen, color: "text-brand-600 bg-brand-50" },
-          { label: "Study Streak", value: "12 days", icon: TrendingUp, color: "text-accent-600 bg-accent-50" },
-          { label: "Questions Today", value: "23", icon: ClipboardCheck, color: "text-purple-600 bg-purple-50" },
-          { label: "Hours This Week", value: "8.5h", icon: Clock, color: "text-orange-600 bg-orange-50" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card flex items-center gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
-              <Icon size={22} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="text-xs text-gray-500">{label}</p>
-            </div>
+      {selectedPlan ? (
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">{selectedPlan.plan_data.title}</h2>
+            <button
+              onClick={() => setSelectedPlan(null)}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Back to list
+            </button>
           </div>
-        ))}
-      </div>
+          <p className="text-sm text-gray-500 mb-6">
+            {selectedPlan.plan_data.totalDays} days total
+          </p>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Left column */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Today's Study Plan */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Today&apos;s Study Plan</h2>
-              <Link href="/dashboard/study-plan" className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">
-                View Full Plan <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {todayTasks.map((task, i) => (
-                <div key={i} className="flex items-center gap-4 rounded-xl border border-gray-100 p-4 transition-colors hover:bg-gray-50">
-                  <button
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-colors ${
-                      task.done
-                        ? "border-accent-500 bg-accent-500 text-white"
-                        : "border-gray-300 hover:border-brand-400"
-                    }`}
-                  >
-                    {task.done && (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${task.done ? "text-gray-400 line-through" : "text-gray-900"}`}>
-                      {task.title}
-                    </p>
-                    <p className="text-xs text-gray-400">{task.course}</p>
-                  </div>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    task.type === "quiz"
-                      ? "bg-purple-50 text-purple-600"
-                      : task.type === "practice"
-                      ? "bg-orange-50 text-orange-600"
-                      : "bg-brand-50 text-brand-600"
-                  }`}>
-                    {task.type}
+          <div className="space-y-4">
+            {selectedPlan.plan_data.days.map((day, di) => (
+              <div key={di} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold">
+                    Day {day.day}: {day.topic}
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    {day.date} · ~{day.estimatedHours}h
                   </span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Courses */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Your Courses</h2>
-              <Link href="/dashboard/courses" className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">
-                Manage <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {courses.map((course) => (
-                <Link key={course.code} href="/dashboard/courses" className={`rounded-xl ${course.bgColor} p-5 transition-shadow hover:shadow-md`}>
-                  <p className="text-sm font-bold text-gray-900">{course.name}</p>
-                  <p className="text-xs text-gray-500">{course.code}</p>
-                  <div className="mt-4">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>Progress</span>
-                      <span>{course.progress}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/60">
-                      <div
-                        className={`h-2 rounded-full ${course.color} transition-all`}
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                <ul className="space-y-2">
+                  {day.tasks.map((task, ti) => {
+                    const key = `${di}-${ti}`;
+                    const done = completedTasks.has(key);
+                    return (
+                      <li key={ti}>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={done}
+                            onChange={() => toggleTask(di, ti)}
+                            className="w-4 h-4"
+                          />
+                          <span className={done ? "line-through text-gray-400" : ""}>
+                            {task}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Right column */}
-        <div className="space-y-8">
-          {/* Upcoming Exams */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Upcoming Exams</h2>
-              <Link href="/dashboard/exams" className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">
-                All <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {upcomingExams.map((exam, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold ${
-                    exam.urgent
-                      ? "bg-red-50 text-red-600"
-                      : "bg-gray-50 text-gray-600"
-                  }`}>
-                    {exam.daysLeft}d
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{exam.name}</p>
-                    <p className="text-xs text-gray-400">{exam.date}</p>
-                  </div>
-                  {exam.urgent && (
-                    <Link href="/dashboard/exams" className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-100 flex items-center gap-1">
-                      <Zap size={12} /> Drill
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Agent Activity */}
-          <div className="card">
-            <div className="flex items-center gap-2 mb-4">
-              <Bot size={18} className="text-brand-600" />
-              <h2 className="text-lg font-bold text-gray-900">Agent Activity</h2>
-            </div>
-            <p className="text-xs text-gray-400 mb-3">Your AI agents are working in the background</p>
-            <div className="space-y-3">
-              {agentActivity.map((activity, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-                    <activity.icon size={14} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-700 leading-relaxed">{activity.action}</p>
-                    <p className="text-xs text-gray-400">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick AI Chat */}
-          <div className="card">
-            <div className="flex items-center gap-2 mb-3">
-              <MessageCircle size={18} className="text-brand-600" />
-              <h2 className="text-lg font-bold text-gray-900">Quick Ask</h2>
-            </div>
-            <Link
-              href="/dashboard/chat"
-              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-surface-50 px-4 py-3 text-sm text-gray-400 hover:border-brand-300 hover:bg-white transition-colors"
-            >
-              Ask anything about your courses...
-            </Link>
+      ) : plans.length > 0 ? (
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">Saved Plans</h2>
+          <div className="space-y-2">
+            {plans.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPlan(p)}
+                className="w-full text-left bg-white border rounded-lg p-4 hover:border-blue-400 transition"
+              >
+                <p className="font-medium">{p.plan_data.title}</p>
+                <p className="text-sm text-gray-500">
+                  Created {new Date(p.created_at).toLocaleDateString()} ·{" "}
+                  {p.plan_data.totalDays} days
+                </p>
+              </button>
+            ))}
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

@@ -1,246 +1,213 @@
 "use client";
-import { useState } from "react";
-import {
-  CalendarDays,
-  BookOpen,
-  ClipboardCheck,
-  Brain,
-  Zap,
-  ChevronDown,
-  ChevronRight,
-  RefreshCw,
-  Bot,
-} from "lucide-react";
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  course: string;
-  courseColor: string;
-  type: "read" | "practice" | "review" | "quiz" | "drill";
-  duration: number;
-  completed: boolean;
-  time: string;
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+
+interface DayPlan {
+  day: number;
+  date: string;
+  topic: string;
+  tasks: string[];
+  estimatedHours: number;
 }
 
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+interface StudyPlan {
+  id: string;
+  course_id: string;
+  plan_data: {
+    title: string;
+    totalDays: number;
+    days: DayPlan[];
+  };
+  created_at: string;
+}
 
-const initialTasks: Record<string, Task[]> = {
-  Mon: [
-    { id: "1", title: "Review Alkene Reactions", description: "Chapter 5, pages 120-145", course: "CHEM 301", courseColor: "bg-brand-500", type: "read", duration: 45, completed: true, time: "9:00 AM" },
-    { id: "2", title: "Practice: Stack Operations", description: "10 coding problems on stacks & queues", course: "CS 201", courseColor: "bg-accent-500", type: "practice", duration: 30, completed: true, time: "11:00 AM" },
-    { id: "3", title: "Read Fiscal Policy Notes", description: "Lecture notes from Week 7", course: "ECON 101", courseColor: "bg-purple-500", type: "read", duration: 25, completed: false, time: "2:00 PM" },
-  ],
-  Tue: [
-    { id: "4", title: "Quiz: Organic Mechanisms", description: "15 multiple choice questions", course: "CHEM 301", courseColor: "bg-brand-500", type: "quiz", duration: 20, completed: false, time: "10:00 AM" },
-    { id: "5", title: "Review: Binary Trees", description: "Traversal methods & balancing", course: "CS 201", courseColor: "bg-accent-500", type: "review", duration: 40, completed: false, time: "1:00 PM" },
-  ],
-  Wed: [
-    { id: "6", title: "Drill: Reaction Mechanisms", description: "Concentrated drill — midterm in 17 days", course: "CHEM 301", courseColor: "bg-brand-500", type: "drill", duration: 60, completed: false, time: "9:00 AM" },
-    { id: "7", title: "Practice: GDP Calculations", description: "8 numerical problems", course: "ECON 101", courseColor: "bg-purple-500", type: "practice", duration: 30, completed: false, time: "2:00 PM" },
-  ],
-  Thu: [
-    { id: "8", title: "Read: Sorting Algorithms", description: "Textbook Ch.7 pages 200-230", course: "CS 201", courseColor: "bg-accent-500", type: "read", duration: 50, completed: false, time: "10:00 AM" },
-    { id: "9", title: "Review: Monetary Policy", description: "Lecture slides & class notes", course: "ECON 101", courseColor: "bg-purple-500", type: "review", duration: 30, completed: false, time: "3:00 PM" },
-  ],
-  Fri: [
-    { id: "10", title: "Mock Test: CHEM Midterm", description: "Full-length practice midterm (90 min)", course: "CHEM 301", courseColor: "bg-brand-500", type: "quiz", duration: 90, completed: false, time: "9:00 AM" },
-    { id: "11", title: "Practice: Graph Traversal", description: "BFS & DFS coding problems", course: "CS 201", courseColor: "bg-accent-500", type: "practice", duration: 40, completed: false, time: "2:00 PM" },
-  ],
-  Sat: [
-    { id: "12", title: "Review: Week Summary", description: "Review all weak areas identified this week", course: "All Courses", courseColor: "bg-gray-500", type: "review", duration: 45, completed: false, time: "10:00 AM" },
-  ],
-  Sun: [],
-};
-
-const typeConfig: Record<string, { icon: typeof BookOpen; color: string; bg: string }> = {
-  read: { icon: BookOpen, color: "text-brand-600", bg: "bg-brand-50" },
-  practice: { icon: ClipboardCheck, color: "text-orange-600", bg: "bg-orange-50" },
-  review: { icon: Brain, color: "text-purple-600", bg: "bg-purple-50" },
-  quiz: { icon: ClipboardCheck, color: "text-teal-600", bg: "bg-teal-50" },
-  drill: { icon: Zap, color: "text-red-600", bg: "bg-red-50" },
-};
+interface Course {
+  id: string;
+  name: string;
+  exam_date: string | null;
+}
 
 export default function StudyPlanPage() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [selectedDay, setSelectedDay] = useState("Mon");
-  const [expandedDays, setExpandedDays] = useState<string[]>(weekDays);
+  const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+  const router = useRouter();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [plans, setPlans] = useState<StudyPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<StudyPlan | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
-  const toggleTask = (day: string, taskId: string) => {
-    setTasks({
-      ...tasks,
-      [day]: tasks[day].map((t) =>
-        t.id === taskId ? { ...t, completed: !t.completed } : t
-      ),
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function fetchData() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push("/login"); return; }
+
+    const [coursesRes, plansRes] = await Promise.all([
+      supabase.from("courses").select("*").eq("user_id", session.user.id),
+      supabase.from("study_plans").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
+    ]);
+
+    setCourses(coursesRes.data || []);
+    setPlans(plansRes.data || []);
+    setLoading(false);
+  }
+
+  async function generatePlan(courseId: string) {
+    setGenerating(courseId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch("/api/study-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ courseId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to generate plan");
+        return;
+      }
+
+      setPlans((prev) => [data.plan, ...prev]);
+      setSelectedPlan(data.plan);
+    } catch (err) {
+      alert("Error generating plan");
+    } finally {
+      setGenerating(null);
+    }
+  }
+
+  function toggleTask(dayIndex: number, taskIndex: number) {
+    const key = `${dayIndex}-${taskIndex}`;
+    setCompletedTasks((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
-  };
+  }
 
-  const toggleDayExpand = (day: string) => {
-    setExpandedDays(
-      expandedDays.includes(day)
-        ? expandedDays.filter((d) => d !== day)
-        : [...expandedDays, day]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <p className="text-gray-500">Loading...</p>
+      </div>
     );
-  };
-
-  const totalTasks = Object.values(tasks).flat().length;
-  const completedTasks = Object.values(tasks).flat().filter((t) => t.completed).length;
+  }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Study Plan</h1>
-          <p className="mt-1 text-gray-500">
-            Your AI-generated weekly study schedule.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="btn-secondary gap-2 text-sm">
-            <RefreshCw size={16} /> Regenerate Plan
-          </button>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Study Plans</h1>
 
-      {/* Agent notice */}
-      <div className="flex items-center gap-3 rounded-xl bg-brand-50 border border-brand-100 px-5 py-3">
-        <Bot size={18} className="text-brand-600" />
-        <p className="text-sm text-brand-700">
-          <span className="font-semibold">Agent update:</span> Your study plan has been adjusted to prioritize CHEM 301 material — midterm is in 17 days.
-        </p>
-      </div>
-
-      {/* Progress overview */}
-      <div className="card">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500">Weekly Progress</p>
-            <p className="text-3xl font-bold text-gray-900">
-              {completedTasks} / {totalTasks}
-              <span className="text-base font-normal text-gray-400 ml-2">tasks completed</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Total study time</p>
-            <p className="text-lg font-bold text-gray-900">
-              {Math.round(Object.values(tasks).flat().reduce((sum, t) => sum + t.duration, 0) / 60 * 10) / 10}h
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 h-3 rounded-full bg-gray-100">
-          <div
-            className="h-3 rounded-full bg-gradient-to-r from-brand-500 to-accent-500 transition-all"
-            style={{ width: `${totalTasks ? (completedTasks / totalTasks) * 100 : 0}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Day selector pills (mobile) */}
-      <div className="flex gap-2 overflow-x-auto pb-2 sm:hidden">
-        {weekDays.map((day) => (
-          <button
-            key={day}
-            onClick={() => setSelectedDay(day)}
-            className={`shrink-0 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-              selectedDay === day ? "bg-brand-600 text-white" : "bg-white text-gray-600 border border-gray-200"
-            }`}
-          >
-            {day}
-            <span className="ml-1 text-xs opacity-75">({tasks[day]?.length || 0})</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Weekly view */}
-      <div className="space-y-4">
-        {weekDays.map((day) => {
-          const dayTasks = tasks[day] || [];
-          const completed = dayTasks.filter((t) => t.completed).length;
-          const expanded = expandedDays.includes(day);
-
-          return (
-            <div key={day} className="card !p-0 overflow-hidden">
+      <div className="mb-8 space-y-3">
+        <h2 className="text-lg font-semibold text-gray-700">Generate a New Plan</h2>
+        {courses.length === 0 ? (
+          <p className="text-gray-500">No courses yet. Add a course first.</p>
+        ) : (
+          courses.map((c) => (
+            <div key={c.id} className="flex items-center justify-between bg-white border rounded-lg p-4">
+              <div>
+                <p className="font-medium">{c.name}</p>
+                {c.exam_date && (
+                  <p className="text-sm text-gray-500">Exam: {c.exam_date}</p>
+                )}
+              </div>
               <button
-                onClick={() => toggleDayExpand(day)}
-                className="flex w-full items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+                onClick={() => generatePlan(c.id)}
+                disabled={generating === c.id}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="flex items-center gap-4">
-                  {expanded ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
-                  <div className="flex items-center gap-3">
-                    <CalendarDays size={18} className="text-brand-500" />
-                    <span className="text-base font-bold text-gray-900">{day}</span>
-                  </div>
-                  <span className="text-sm text-gray-400">
-                    {completed}/{dayTasks.length} tasks
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">
-                    {dayTasks.reduce((sum, t) => sum + t.duration, 0)} min
-                  </span>
-                  {dayTasks.length > 0 && (
-                    <div className="h-2 w-20 rounded-full bg-gray-100">
-                      <div
-                        className="h-2 rounded-full bg-accent-500 transition-all"
-                        style={{ width: `${dayTasks.length ? (completed / dayTasks.length) * 100 : 0}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
+                {generating === c.id ? "Generating..." : "Generate Study Plan"}
               </button>
+            </div>
+          ))
+        )}
+      </div>
 
-              {expanded && dayTasks.length > 0 && (
-                <div className="border-t border-gray-100 px-6 py-4 space-y-3">
-                  {dayTasks.map((task) => {
-                    const config = typeConfig[task.type];
-                    const Icon = config.icon;
+      {selectedPlan ? (
+        <div className="bg-white border rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">{selectedPlan.plan_data.title}</h2>
+            <button
+              onClick={() => setSelectedPlan(null)}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Back to list
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 mb-6">
+            {selectedPlan.plan_data.totalDays} days total
+          </p>
+
+          <div className="space-y-4">
+            {selectedPlan.plan_data.days.map((day, di) => (
+              <div key={di} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold">
+                    Day {day.day}: {day.topic}
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    {day.date} · ~{day.estimatedHours}h
+                  </span>
+                </div>
+                <ul className="space-y-2">
+                  {day.tasks.map((task, ti) => {
+                    const key = `${di}-${ti}`;
+                    const done = completedTasks.has(key);
                     return (
-                      <div key={task.id} className="flex items-center gap-4 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition-colors">
-                        <button
-                          onClick={() => toggleTask(day, task.id)}
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-colors ${
-                            task.completed
-                              ? "border-accent-500 bg-accent-500 text-white"
-                              : "border-gray-300 hover:border-brand-400"
-                          }`}
-                        >
-                          {task.completed && (
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </button>
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${config.bg}`}>
-                          <Icon size={16} className={config.color} />
-                        </div>
-                        <div className="flex-1">
-                          <p className={`text-sm font-medium ${task.completed ? "text-gray-400 line-through" : "text-gray-900"}`}>
-                            {task.title}
-                          </p>
-                          <p className="text-xs text-gray-400">{task.description}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className={`h-2 w-2 rounded-full ${task.courseColor}`} />
-                          <span className="text-xs text-gray-500">{task.course}</span>
-                          <span className="text-xs text-gray-400">{task.duration}m</span>
-                          <span className="text-xs text-gray-400">{task.time}</span>
-                        </div>
-                      </div>
+                      <li key={ti}>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={done}
+                            onChange={() => toggleTask(di, ti)}
+                            className="w-4 h-4"
+                          />
+                          <span className={done ? "line-through text-gray-400" : ""}>
+                            {task}
+                          </span>
+                        </label>
+                      </li>
                     );
                   })}
-                </div>
-              )}
-
-              {expanded && dayTasks.length === 0 && (
-                <div className="border-t border-gray-100 px-6 py-8 text-center text-sm text-gray-400">
-                  Rest day — no tasks scheduled
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : plans.length > 0 ? (
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">Saved Plans</h2>
+          <div className="space-y-2">
+            {plans.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPlan(p)}
+                className="w-full text-left bg-white border rounded-lg p-4 hover:border-blue-400 transition"
+              >
+                <p className="font-medium">{p.plan_data.title}</p>
+                <p className="text-sm text-gray-500">
+                  Created {new Date(p.created_at).toLocaleDateString()} ·{" "}
+                  {p.plan_data.totalDays} days
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

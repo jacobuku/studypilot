@@ -20,9 +20,7 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/dashboard/courses", icon: BookOpen, label: "Courses" },
   { href: "/dashboard/study-plan", icon: CalendarDays, label: "Study Plan" },
-  { href: "/dashboard/practice", icon: ClipboardCheck, label: "Practice" },
-  { href: "/dashboard/chat", icon: MessageCircle, label: "AI Tutor" },
-  { href: "/dashboard/exams", icon: Timer, label: "Exams" },
+  { href: "/dashboard/quiz", icon: ClipboardCheck, label: "Practice" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -75,7 +73,7 @@ export default function Sidebar() {
         {/* Subscription badge */}
         {!collapsed && (
           <div className="mb-2 rounded-xl bg-gradient-to-r from-brand-50 to-accent-50 p-3">
-            <p className="text-xs font-semibold text-gray-900">Pro Plan</p>
+            <p className="text-xs font-semibold text-gray-900">Free Beta</p>
             <p className="text-xs text-gray-500">3 of 6 courses used</p>
             <div className="mt-2 h-1.5 rounded-full bg-white">
               <div className="h-1.5 w-1/2 rounded-full bg-brand-500" />
