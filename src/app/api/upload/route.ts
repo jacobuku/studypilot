@@ -50,17 +50,12 @@ export async function POST(req: NextRequest) {
     let extractedText = "";
     if (file.type === "application/pdf") {
       try {
-        const tmpPath = join("/tmp", `upload_${Date.now()}.pdf`);
-        writeFileSync(tmpPath, fileBuffer);
-        const workerPath = join(process.cwd(), "src/lib/parse-pdf-worker.cjs");
-        extractedText = execFileSync("node", [workerPath, tmpPath], {
-          encoding: "utf-8",
-          timeout: 30000,
-        });
-        unlinkSync(tmpPath);
-      } catch (e) {
-        console.error("PDF parse error:", e);
-      }
+      const pdfParse = require("pdf-parse");
+      const pdfData = await pdfParse(fileBuffer);
+      extractedText = pdfData.text;
+    } catch (e) {
+      console.error("PDF parse error:", e);
+    }
     }
 
     const { data: material, error: dbError } = await supabaseAdmin
