@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         const tmpPath = join("/tmp", `upload_${Date.now()}.pdf`);
         writeFileSync(tmpPath, fileBuffer);
         const workerPath = join(process.cwd(), "src/lib/parse-pdf-worker.cjs");
-        extractedText = execFileSync("node", [workerPath, tmpPath], { encoding: "utf-8",
+        extractedText = execFileSync("node", [workerPath, tmpPath], {
           encoding: "utf-8",
           timeout: 30000,
         });
