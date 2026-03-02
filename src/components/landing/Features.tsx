@@ -1,103 +1,95 @@
-"use client";
-import {
-  Upload,
-  BrainCircuit,
-  ClipboardCheck,
-  MessageCircle,
-  CalendarClock,
-  Zap,
-  Link2,
-  Bot,
-} from "lucide-react";
-
-const features = [
-  {
-    icon: Upload,
-    title: "Upload Any Material",
-    description:
-      "Drop your PDFs, lecture slides, textbook chapters, and class notes. Our AI reads and understands them all to build your knowledge base.",
-    color: "text-brand-600 bg-brand-50",
-  },
-  {
-    icon: Link2,
-    title: "Canvas Integration",
-    description:
-      "Connect your Canvas LMS account to automatically import syllabi, assignments, and exam dates. Zero manual setup.",
-    color: "text-purple-600 bg-purple-50",
-  },
-  {
-    icon: BrainCircuit,
-    title: "Smart Study Plans",
-    description:
-      "Get a personalized day-by-day study schedule that adapts to your progress, workload, and upcoming exams.",
-    color: "text-accent-600 bg-accent-50",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "Practice & Mock Tests",
-    description:
-      "Auto-generated practice questions, timed mock exams, and quizzes tailored to your course content and weak areas.",
-    color: "text-orange-600 bg-orange-50",
-  },
-  {
-    icon: CalendarClock,
-    title: "Exam Reminders & Drills",
-    description:
-      "Never miss an exam again. Get countdown reminders and enter concentrated drill mode to cram effectively before finals and midterms.",
-    color: "text-red-600 bg-red-50",
-  },
-  {
-    icon: MessageCircle,
-    title: "Ask Anything",
-    description:
-      "Stuck on a concept? Ask your AI tutor and get a no-brainer, step-by-step explanation based on your actual course material.",
-    color: "text-teal-600 bg-teal-50",
-  },
-  {
-    icon: Bot,
-    title: "Autonomous Agents",
-    description:
-      "Our AI agents proactively prepare your study materials, generate quizzes, and adjust your plan — no clicking required.",
-    color: "text-indigo-600 bg-indigo-50",
-  },
-  {
-    icon: Zap,
-    title: "Built for Speed",
-    description:
-      "No overwhelm, no clutter. A clean interface designed so any student can start learning in under 60 seconds.",
-    color: "text-yellow-600 bg-yellow-50",
-  },
-];
-
 export default function Features() {
   return (
-    <section id="features" className="bg-white py-24">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">
-            Everything You Need
-          </p>
-          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-            Study Smarter, Not Harder
+    <section id="features" className="py-24 px-6 bg-white">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Three buttons. That&apos;s it.
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
-            From file uploads to AI-generated study plans and real-time Q&A —
-            StudyPilot handles the heavy lifting so you can focus on learning.
+          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
+            No prompt engineering. No &quot;act as my tutor&quot; nonsense. Just upload your materials and click.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map(({ icon: Icon, title, description, color }) => (
-            <div key={title} className="card group">
-              <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${color} transition-transform group-hover:scale-110`}>
-                <Icon size={22} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Feature 1 */}
+          <div className="relative group">
+            <div className="bg-blue-50 rounded-2xl p-8 h-full transition hover:shadow-lg hover:shadow-blue-100">
+              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl mb-6">
+                📅
               </div>
-              <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-500">
-                {description}
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Upload → Study Plan
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Drop your PDF. AI reads every page and builds a day-by-day study plan tailored to your exam date. No typing required.
               </p>
+              <div className="mt-6 bg-white rounded-xl p-4 border border-blue-100">
+                <p className="text-xs text-gray-400 mb-2">Generated in 10 seconds:</p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full" />
+                    <span className="text-gray-700">Day 1: Introduction & Key Terms</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full" />
+                    <span className="text-gray-700">Day 2: Core Concepts Review</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 bg-blue-300 rounded-full" />
+                    <span className="text-gray-700">Day 3: Practice Problems</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
+
+          {/* Feature 2 */}
+          <div className="relative group">
+            <div className="bg-green-50 rounded-2xl p-8 h-full transition hover:shadow-lg hover:shadow-green-100">
+              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center text-white text-xl mb-6">
+                ✏️
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Quiz → Auto-Grade
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                One click generates a 10-question quiz from your materials. Submit and get instant scoring plus AI analysis of your weak spots.
+              </p>
+              <div className="mt-6 bg-white rounded-xl p-4 border border-green-100">
+                <p className="text-xs text-gray-400 mb-2">Your results:</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl font-bold text-green-600">80%</div>
+                  <div className="text-sm text-gray-500">
+                    8/10 correct
+                    <br />
+                    <span className="text-yellow-600">Review: Chapter 3 concepts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 3 */}
+          <div className="relative group">
+            <div className="bg-purple-50 rounded-2xl p-8 h-full transition hover:shadow-lg hover:shadow-purple-100">
+              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white text-xl mb-6">
+                💡
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Wrong → Explained
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Got a question wrong? Hit &quot;Explain This&quot; and AI walks you through why — referencing your actual course materials.
+              </p>
+              <div className="mt-6 bg-white rounded-xl p-4 border border-purple-100">
+                <p className="text-xs text-gray-400 mb-2">AI explanation:</p>
+                <p className="text-sm text-gray-700 italic">
+                  &quot;You picked A because it sounds right, but the text on page 12 specifically states that...&quot;
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

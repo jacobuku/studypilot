@@ -1,67 +1,109 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, GraduationCap } from "lucide-react";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 z-50 w-full glass">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
-            <GraduationCap size={20} />
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <svg
+              className="w-5 h-5 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
+            </svg>
           </div>
-          <span className="text-xl font-bold tracking-tight">
-            Study<span className="text-brand-600">Pilot</span>
-          </span>
+          <span className="text-xl font-bold text-gray-900">StudyPilot</span>
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden items-center gap-8 md:flex">
-          <a href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+        <div className="hidden md:flex items-center gap-8">
+          <a
+            href="#features"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+          >
             Features
           </a>
-          <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+          <a
+            href="#how-it-works"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+          >
             How It Works
           </a>
-          <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-            Pricing
+          <a
+            href="#pricing"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+          >
+            Compare
           </a>
-          <a href="#testimonials" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-            Students
+          <a
+            href="#story"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+          >
+            Our Story
           </a>
         </div>
 
-        {/* CTA */}
-        <div className="hidden items-center gap-3 md:flex">
-          <Link href="/dashboard" className="btn-secondary text-sm">
+        {/* Auth buttons */}
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/login"
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition"
+          >
             Log In
           </Link>
-          <Link href="/dashboard" className="btn-primary text-sm">
+          <Link
+            href="/signup"
+            className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+          >
             Get Started Free
           </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2">
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden p-2"
+          onClick={() => setMobileOpen(!mobileOpen)}
+        >
+          <svg
+            className="w-6 h-6 text-gray-700"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            {mobileOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-gray-100 bg-white px-6 pb-6 pt-4 md:hidden animate-fade-in">
-          <div className="flex flex-col gap-4">
-            <a href="#features" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Features</a>
-            <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">How It Works</a>
-            <a href="#pricing" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Pricing</a>
-            <a href="#testimonials" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-gray-700">Students</a>
-            <hr className="my-2 border-gray-100" />
-            <Link href="/dashboard" className="btn-primary w-full text-center">Get Started Free</Link>
-          </div>
+        <div className="md:hidden bg-white border-t border-gray-100 px-6 py-4 space-y-3">
+          <a href="#features" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-gray-700">Features</a>
+          <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-gray-700">How It Works</a>
+          <a href="#pricing" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-gray-700">Compare</a>
+          <a href="#story" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-gray-700">Our Story</a>
+          <hr />
+          <Link href="/login" className="block text-sm font-medium text-gray-700">Log In</Link>
+          <Link href="/signup" className="block text-sm font-medium text-blue-600">Get Started Free</Link>
         </div>
       )}
     </nav>

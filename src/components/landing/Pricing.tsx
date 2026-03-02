@@ -1,131 +1,90 @@
-"use client";
-import { Check } from "lucide-react";
 import Link from "next/link";
-
-const plans = [
-  {
-    name: "Free",
-    price: "0",
-    period: "forever",
-    description: "Try StudyPilot with one course — no credit card needed.",
-    courses: "1 course",
-    highlight: false,
-    features: [
-      "1 course material set",
-      "AI study plan generation",
-      "5 practice questions / day",
-      "Basic Q&A chat",
-      "Exam reminders",
-    ],
-    cta: "Get Started",
-  },
-  {
-    name: "Pro",
-    price: "9.99",
-    period: "/month",
-    description: "For students managing a full course load each semester.",
-    courses: "Up to 6 courses",
-    highlight: true,
-    features: [
-      "Up to 6 course material sets",
-      "Advanced AI study plans",
-      "Unlimited practice questions",
-      "Mock tests & timed quizzes",
-      "Priority Q&A with detailed explanations",
-      "Canvas LMS integration",
-      "Exam drill mode",
-      "Autonomous study agents",
-    ],
-    cta: "Start Pro Trial",
-  },
-  {
-    name: "Max",
-    price: "20",
-    period: "/month",
-    description: "For power students, double majors, and overachievers.",
-    courses: "Up to 15 courses",
-    highlight: false,
-    features: [
-      "Up to 15 course material sets",
-      "Everything in Pro",
-      "Unlimited mock tests",
-      "Advanced drill mode with analytics",
-      "Multi-course study plans",
-      "Priority support",
-      "Early access to new features",
-    ],
-    cta: "Start Max Trial",
-  },
-];
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="bg-white py-24">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">
-            Simple Pricing
-          </p>
-          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-            Affordable Tutoring for Every Student
+    <section id="pricing" className="py-24 px-6 bg-white">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Why not just use ChatGPT?
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
-            Less than a coffee a week for Pro. A fraction of the cost of an
-            in-person tutor. Cancel anytime.
+          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
+            You could. But you&apos;d spend 20 minutes writing the right prompt — and still not get a study plan.
           </p>
         </div>
 
-        <div className="mt-16 grid items-start gap-8 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl border p-8 transition-shadow ${
-                plan.highlight
-                  ? "border-brand-500 bg-white shadow-xl ring-1 ring-brand-500 scale-[1.03]"
-                  : "border-gray-200 bg-white shadow-sm hover:shadow-md"
-              }`}
-            >
-              {plan.highlight && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-brand-600 px-4 py-1 text-xs font-bold text-white shadow">
-                    Most Popular
-                  </span>
-                </div>
-              )}
+        {/* Comparison table */}
+        <div className="overflow-hidden rounded-2xl border border-gray-200">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="text-left p-5 text-sm font-medium text-gray-500 w-1/3">
+                  Feature
+                </th>
+                <th className="text-center p-5 text-sm font-medium text-gray-500 w-1/3">
+                  ChatGPT / Competitors
+                </th>
+                <th className="text-center p-5 text-sm font-medium text-blue-600 w-1/3 bg-blue-50">
+                  StudyPilot
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              <tr>
+                <td className="p-5 text-gray-700">Upload PDF & auto-extract</td>
+                <td className="p-5 text-center text-gray-400">Manual copy-paste</td>
+                <td className="p-5 text-center text-green-600 font-semibold bg-blue-50/30">✓ One click</td>
+              </tr>
+              <tr>
+                <td className="p-5 text-gray-700">Study plan generation</td>
+                <td className="p-5 text-center text-gray-400">Write your own prompt</td>
+                <td className="p-5 text-center text-green-600 font-semibold bg-blue-50/30">✓ Automatic</td>
+              </tr>
+              <tr>
+                <td className="p-5 text-gray-700">Practice quizzes</td>
+                <td className="p-5 text-center text-gray-400">Ask for quiz + self-grade</td>
+                <td className="p-5 text-center text-green-600 font-semibold bg-blue-50/30">✓ Auto-graded</td>
+              </tr>
+              <tr>
+                <td className="p-5 text-gray-700">Wrong answer explanations</td>
+                <td className="p-5 text-center text-gray-400">Copy question & re-ask</td>
+                <td className="p-5 text-center text-green-600 font-semibold bg-blue-50/30">✓ One button</td>
+              </tr>
+              <tr>
+                <td className="p-5 text-gray-700">Prompting required</td>
+                <td className="p-5 text-center text-red-500 font-semibold">Yes, every time</td>
+                <td className="p-5 text-center text-green-600 font-semibold bg-blue-50/30">✓ Never</td>
+              </tr>
+              <tr>
+                <td className="p-5 text-gray-700">Price</td>
+                <td className="p-5 text-center text-gray-400">$20/mo for GPT-4</td>
+                <td className="p-5 text-center text-green-600 font-semibold bg-blue-50/30">Free Beta</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-              <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-              <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
-
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-gray-900">
-                  ${plan.price}
-                </span>
-                <span className="text-gray-500">{plan.period}</span>
-              </div>
-
-              <p className="mt-2 text-sm font-semibold text-brand-600">
-                {plan.courses}
+        {/* Free Beta CTA */}
+        <div className="mt-16 text-center">
+          <div className="inline-block bg-gradient-to-r from-blue-600 to-teal-500 rounded-2xl p-[2px]">
+            <div className="bg-white rounded-2xl px-12 py-10">
+              <p className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">
+                Free Beta
               </p>
-
-              <ul className="mt-8 space-y-3">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-3 text-sm text-gray-600">
-                    <Check size={16} className="mt-0.5 shrink-0 text-accent-500" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                Join the early users
+              </h3>
+              <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                StudyPilot is free while in beta. All features, no credit card, no limits.
+              </p>
               <Link
-                href="/dashboard"
-                className={`mt-8 block w-full text-center ${
-                  plan.highlight ? "btn-primary" : "btn-secondary"
-                }`}
+                href="/signup"
+                className="inline-block px-8 py-3.5 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
               >
-                {plan.cta}
+                Get Started Free →
               </Link>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </section>

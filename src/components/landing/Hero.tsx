@@ -1,124 +1,91 @@
 "use client";
+
 import Link from "next/link";
-import {
-  BookOpen,
-  BrainCircuit,
-  Sparkles,
-  Upload,
-  ArrowRight,
-} from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 via-white to-white pt-32 pb-20">
-      {/* Background decorative blobs */}
-      <div className="pointer-events-none absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-brand-100/40 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-40 h-[400px] w-[400px] rounded-full bg-accent-100/40 blur-3xl" />
+    <section className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50 pt-32 pb-20 px-6">
+      {/* Badge */}
+      <div className="flex justify-center mb-6">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+          Built by a Real College Tutor
+        </span>
+      </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 text-center">
-        {/* Badge */}
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">
-          <Sparkles size={14} />
-          AI-Powered College Tutoring
-        </div>
+      {/* Main heading */}
+      <h1 className="max-w-4xl mx-auto text-center text-5xl md:text-6xl font-bold tracking-tight text-gray-900 leading-tight">
+        AI Studying, Without{" "}
+        <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
+          the Prompting
+        </span>
+      </h1>
 
-        {/* Headline */}
-        <h1 className="mx-auto max-w-4xl text-5xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-6xl lg:text-7xl animate-slide-up">
-          Your Personal Tutor,{" "}
-          <span className="bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
-            Always On
+      {/* Subheading - pain point first */}
+      <p className="max-w-2xl mx-auto text-center mt-6 text-lg text-gray-600 leading-relaxed">
+        You know AI can help you study. You just don&apos;t know how to ask it.
+        <br />
+        <span className="text-gray-900 font-medium">
+          Upload your PDF. We handle the rest — study plans, practice quizzes, and step-by-step explanations. Zero prompting required.
+        </span>
+      </p>
+
+      {/* CTAs */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+        <Link
+          href="/signup"
+          className="px-8 py-3.5 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+        >
+          Upload Your First PDF — Free →
+        </Link>
+        <a
+          href="#how-it-works"
+          className="px-8 py-3.5 border-2 border-gray-200 rounded-xl text-lg font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition"
+        >
+          See How It Works
+        </a>
+      </div>
+
+      {/* Three feature pills */}
+      <div className="flex flex-wrap justify-center gap-3 mt-12">
+        {[
+          { icon: "📄", text: "Upload & Go" },
+          { icon: "📅", text: "Auto Study Plans" },
+          { icon: "✅", text: "One-Click Quizzes" },
+        ].map((item) => (
+          <span
+            key={item.text}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 shadow-sm"
+          >
+            <span>{item.icon}</span>
+            {item.text}
           </span>
-        </h1>
+        ))}
+      </div>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          Upload your class materials, connect Canvas, and let StudyPilot build a
-          personalized study plan with practice questions, mock exams, and
-          step-by-step explanations — so you can learn at your pace, not the
-          class pace.
-        </p>
-
-        {/* CTA buttons */}
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row animate-slide-up" style={{ animationDelay: "0.2s" }}>
-          <Link href="/dashboard" className="btn-primary gap-2 px-8 py-4 text-base">
-            Start Learning for Free <ArrowRight size={18} />
-          </Link>
-          <a href="#how-it-works" className="btn-secondary gap-2 px-8 py-4 text-base">
-            See How It Works
-          </a>
+      {/* Product screenshot placeholder */}
+      <div className="max-w-5xl mx-auto mt-16 rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-gray-200/50 overflow-hidden">
+        <div className="bg-gray-100 px-4 py-3 flex items-center gap-2 border-b">
+          <div className="w-3 h-3 rounded-full bg-red-400" />
+          <div className="w-3 h-3 rounded-full bg-yellow-400" />
+          <div className="w-3 h-3 rounded-full bg-green-400" />
+          <span className="ml-3 text-xs text-gray-400">studypilot.app/dashboard</span>
         </div>
-
-        {/* Quick feature pills */}
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          {[
-            { icon: Upload, label: "Upload PDFs & Notes" },
-            { icon: BrainCircuit, label: "AI Study Plans" },
-            { icon: BookOpen, label: "Mock Tests & Drills" },
-          ].map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm"
-            >
-              <Icon size={16} className="text-brand-500" />
-              {label}
+        <div className="p-8 text-center text-gray-400 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-blue-50 rounded-xl p-6 text-left">
+              <p className="text-2xl mb-2">📄</p>
+              <p className="font-semibold text-gray-900 text-base mb-1">Upload PDF</p>
+              <p className="text-gray-500 text-sm">Drop your lecture notes, textbook chapters, or study guides</p>
             </div>
-          ))}
-        </div>
-
-        {/* Dashboard preview mock */}
-        <div className="mx-auto mt-16 max-w-5xl animate-slide-up" style={{ animationDelay: "0.4s" }}>
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-            {/* Mock browser bar */}
-            <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-4 py-3">
-              <div className="h-3 w-3 rounded-full bg-red-300" />
-              <div className="h-3 w-3 rounded-full bg-yellow-300" />
-              <div className="h-3 w-3 rounded-full bg-green-300" />
-              <div className="ml-4 h-6 flex-1 rounded-md bg-gray-200" />
+            <div className="bg-green-50 rounded-xl p-6 text-left">
+              <p className="text-2xl mb-2">📅</p>
+              <p className="font-semibold text-gray-900 text-base mb-1">Get Study Plan</p>
+              <p className="text-gray-500 text-sm">AI reads your materials and builds a day-by-day plan</p>
             </div>
-            {/* Mock dashboard preview */}
-            <div className="grid grid-cols-3 gap-4 p-6">
-              {/* Left column – courses */}
-              <div className="col-span-1 space-y-3">
-                <div className="h-4 w-24 rounded bg-gray-200" />
-                {["bg-brand-100", "bg-accent-100", "bg-purple-100"].map((c, i) => (
-                  <div key={i} className={`rounded-xl ${c} p-4`}>
-                    <div className="h-3 w-20 rounded bg-white/60 mb-2" />
-                    <div className="h-2 w-32 rounded bg-white/40" />
-                    <div className="mt-3 h-2 rounded-full bg-white/40">
-                      <div className="h-2 rounded-full bg-white/80" style={{ width: `${50 + i * 20}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Center – study plan */}
-              <div className="col-span-1 space-y-3">
-                <div className="h-4 w-28 rounded bg-gray-200" />
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
-                    <div className="h-5 w-5 rounded-md border-2 border-brand-300" />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-2.5 w-24 rounded bg-gray-200" />
-                      <div className="h-2 w-16 rounded bg-gray-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Right column – chat */}
-              <div className="col-span-1 space-y-3">
-                <div className="h-4 w-16 rounded bg-gray-200" />
-                <div className="flex flex-col gap-2">
-                  <div className="self-start rounded-xl rounded-tl-sm bg-gray-100 px-4 py-2">
-                    <div className="h-2.5 w-40 rounded bg-gray-300" />
-                  </div>
-                  <div className="self-end rounded-xl rounded-tr-sm bg-brand-500 px-4 py-2">
-                    <div className="h-2.5 w-32 rounded bg-white/50" />
-                  </div>
-                  <div className="self-start rounded-xl rounded-tl-sm bg-gray-100 px-4 py-2 space-y-1">
-                    <div className="h-2.5 w-44 rounded bg-gray-300" />
-                    <div className="h-2.5 w-36 rounded bg-gray-300" />
-                    <div className="h-2.5 w-24 rounded bg-gray-300" />
-                  </div>
-                </div>
-              </div>
+            <div className="bg-purple-50 rounded-xl p-6 text-left">
+              <p className="text-2xl mb-2">✅</p>
+              <p className="font-semibold text-gray-900 text-base mb-1">Practice & Learn</p>
+              <p className="text-gray-500 text-sm">Take quizzes, get instant grading, and explanations for every wrong answer</p>
             </div>
           </div>
         </div>
