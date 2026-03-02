@@ -12,7 +12,7 @@ export default function Testimonials() {
               J
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Jacob</p>
+              <p className="font-semibold text-gray-900">Jolin</p>
               <p className="text-sm text-gray-500">College tutor & builder</p>
             </div>
           </div>
